@@ -19,3 +19,25 @@ def get_file_content(working_directory, file_path):
         return file_content_string
     except Exception as e:
         return f'Exception reading file: {e}"'
+    
+
+# Groq tool schema: must be in OpenAI function format
+schema_get_file_content = {
+    "name": "get_file_content",
+    "description": "Gets the contents of the given file as a string, constrained to the working directory.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "working_directory": {
+                "type": "string",
+                "description": "The base working directory (optional)."
+            },
+            "file_path": {
+                "type": "string",
+                "description": "the path to the file, from the working directory.",
+                "default": "."
+            }
+        },
+        "required": ["file_path"]
+    }
+}
