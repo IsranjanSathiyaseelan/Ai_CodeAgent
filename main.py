@@ -41,7 +41,7 @@ All paths you provide should be relative to the working directory.You do not nee
         print("I need a prompt!")
         sys.exit(1)
 
-    prompt = " ".join(sys.argv[1:])
+    prompt = " ".join(arg for arg in sys.argv[1:] if arg != "--verbose")
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -60,6 +60,15 @@ All paths you provide should be relative to the working directory.You do not nee
         ],
         function_call="auto"
     )
+
+    # Print token usage if --verbose flag is passed
+    if "--verbose" in sys.argv:
+        usage = getattr(chat_completion, "usage", None)
+        if usage:
+            print("\n--- Token Usage ---")
+            print(f"Prompt tokens: {usage.prompt_tokens}")
+            print(f"Completion tokens: {usage.completion_tokens}")
+            print(f"Total tokens: {usage.total_tokens}")
 
     message = chat_completion.choices[0].message
     function_call_obj = getattr(message, "function_call", None)
