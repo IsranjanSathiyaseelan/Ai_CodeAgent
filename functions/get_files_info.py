@@ -1,18 +1,19 @@
-import os
+from pathlib import Path
 
 def get_files_info(working_directory, directory="."):
-    abs_working_dir = os.path.abspath(working_directory)
-    abs_directory = os.path.abspath(os.path.join(working_directory, directory))
-    if not abs_directory.startswith(abs_working_dir):
+    abs_working_dir = Path(working_directory).resolve()
+    abs_directory = (abs_working_dir / directory).resolve()
+    try:
+        abs_directory.relative_to(abs_working_dir)
+    except ValueError:
         return f'Error: "{directory}" is not in the working directory'
 
     final_response = ""
-    contents = os.listdir(abs_directory)
+    contents = sorted(abs_directory.iterdir(), key=lambda path: path.name.lower())
     for content in contents:
-        content_path = os.path.join(abs_directory, content)
-        is_dir = os.path.isdir(content_path)
-        size = os.path.getsize(content_path)
-        final_response += f"- {content} files_size={size} bytes, is_dir={is_dir}\n"
+        is_dir = content.is_dir()
+        size = content.stat().st_size
+        final_response += f"- {content.name} file_size={size} bytes, is_dir={is_dir}\n"
     return final_response
 
 # Groq tool schema: must be in OpenAI function format

@@ -1,19 +1,20 @@
-import os
+from pathlib import Path
 
 def write_file(working_directory, file_path, content):
-    abs_working_dir = os.path.abspath(working_directory)
-    abs_file_path = os.path.abspath(os.path.join(working_directory, file_path))
-    if not abs_file_path.startswith(abs_working_dir):
+    abs_working_dir = Path(working_directory).resolve()
+    abs_file_path = (abs_working_dir / file_path).resolve()
+    try:
+        abs_file_path.relative_to(abs_working_dir)
+    except ValueError:
         return f'Error: "{file_path}" is not in the working directory'
     
-    parent_dir = os.path.dirname(abs_file_path)
-    if not os.path.isdir(parent_dir):
-        try:
-            os.makedirs(parent_dir)
-        except Exception as e:
-            return f"Could not create parent dirs: {parent_dir} = {e}"
+    parent_dir = abs_file_path.parent
     try:
-        with open(abs_file_path, 'w') as f:
+        parent_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        return f"Could not create parent dirs: {parent_dir} = {e}"
+    try:
+        with abs_file_path.open('w', encoding="utf-8") as f:
             f.write(content)
         return f'Successfully wrote to "{file_path}" ({len(content)} characters written)'
     except Exception as e:

@@ -1,23 +1,28 @@
-import os
 import subprocess
 import sys
+from pathlib import Path
 
-def run_python_file(working_directory: str, file_path: str, args=[]):
-    abs_working_dir = os.path.abspath(working_directory)
-    abs_file_path = os.path.abspath(os.path.join(working_directory, file_path))
-    if not abs_file_path.startswith(abs_working_dir):
+def run_python_file(working_directory: str, file_path: str, args=None):
+    if args is None:
+        args = []
+
+    abs_working_dir = Path(working_directory).resolve()
+    abs_file_path = (abs_working_dir / file_path).resolve()
+    try:
+        abs_file_path.relative_to(abs_working_dir)
+    except ValueError:
         return f'Error: "{file_path}" is not in the working directory'
-    if not os.path.isfile(abs_file_path):
+    if not abs_file_path.is_file():
         return f'Error: "{file_path}" is not a file'
     if not file_path.endswith(".py"):
         return f'Error: "{file_path}" is not a Python files.'
     
     try:
-        final_args = [sys.executable, file_path]
+        final_args = [sys.executable, str(abs_file_path)]
         final_args.extend(args)
         output = subprocess.run(
             final_args,
-            cwd=abs_working_dir, 
+            cwd=str(abs_working_dir), 
             timeout=30,
             capture_output=True,
             text=True
