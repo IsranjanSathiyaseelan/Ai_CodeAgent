@@ -1,11 +1,21 @@
-import pathlib
+from pathlib import Path
 from functions.get_files_info import get_files_info
 from functions.get_file_content import get_file_content
 from functions.write_file import write_file
 from functions.run_python_file import run_python_file
 
+BASE_DIRECTORY = Path(__file__).resolve().parent
+
 # Base working directory for all operations
-WORKING_DIRECTORY = pathlib.Path.cwd() / "calculator"
+WORKING_DIRECTORY = BASE_DIRECTORY / "calculator"
+
+
+def _is_within_working_directory(target_path: Path) -> bool:
+    try:
+        target_path.resolve().relative_to(WORKING_DIRECTORY.resolve())
+        return True
+    except ValueError:
+        return False
 
 
 def call_function(function_call_part):
@@ -33,10 +43,10 @@ def call_function(function_call_part):
     try:
         if function_name == "get_files_info":
             directory = args.get("directory", ".")
-            target_path = (WORKING_DIRECTORY / directory).resolve()
+            target_path = WORKING_DIRECTORY / directory
 
             # Ensure path is inside calculator
-            if WORKING_DIRECTORY not in target_path.parents and WORKING_DIRECTORY != target_path:
+            if not _is_within_working_directory(target_path):
                 return f"Error: '{directory}' is outside working directory!"
 
             print(f"Calling function: {function_name}({{'directory': '{directory}'}})")
@@ -44,9 +54,9 @@ def call_function(function_call_part):
 
         elif function_name == "get_file_content":
             file_path = args.get("file_path", ".")
-            target_path = (WORKING_DIRECTORY / file_path).resolve()
+            target_path = WORKING_DIRECTORY / file_path
 
-            if WORKING_DIRECTORY not in target_path.parents and WORKING_DIRECTORY != target_path:
+            if not _is_within_working_directory(target_path):
                 return f"Error: '{file_path}' is outside working directory!"
 
             print(f"Calling function: {function_name}({{'file_path': '{file_path}'}})")
@@ -55,9 +65,9 @@ def call_function(function_call_part):
         elif function_name == "write_file":
             file_path = args.get("file_path")
             content = args.get("content", "")
-            target_path = (WORKING_DIRECTORY / file_path).resolve()
+            target_path = WORKING_DIRECTORY / file_path
 
-            if WORKING_DIRECTORY not in target_path.parents and WORKING_DIRECTORY != target_path:
+            if not _is_within_working_directory(target_path):
                 return f"Error: '{file_path}' is outside working directory!"
 
             print(f"Calling function: {function_name}({{'file_path': '{file_path}'}})")
@@ -66,9 +76,9 @@ def call_function(function_call_part):
         elif function_name == "run_python_file":
             file_path = args.get("file_path")
             args_list = args.get("args", [])
-            target_path = (WORKING_DIRECTORY / file_path).resolve()
+            target_path = WORKING_DIRECTORY / file_path
 
-            if WORKING_DIRECTORY not in target_path.parents and WORKING_DIRECTORY != target_path:
+            if not _is_within_working_directory(target_path):
                 return f"Error: '{file_path}' is outside working directory!"
 
             print(f"Calling function: {function_name}({{'file_path': '{file_path}'}})")

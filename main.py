@@ -48,17 +48,20 @@ All paths you provide should be relative to the working directory.You do not nee
         {"role": "user", "content": prompt}
     ]
 
+    # Build OpenAI-style tool declarations for Groq.
+    tools = [
+        {"type": "function", "function": schema_get_files_info},
+        {"type": "function", "function": schema_get_file_content},
+        {"type": "function", "function": schema_write_file},
+        {"type": "function", "function": schema_run_python_file},
+    ]
+
     # Call Groq for completion
     chat_completion = client.chat.completions.create(
         messages=messages,
         model="llama-3.3-70b-versatile",
-        functions=[
-            schema_get_files_info,
-            schema_get_file_content,
-            schema_write_file,
-            schema_run_python_file
-        ],
-        function_call="auto"
+        tools=tools,
+        tool_choice="auto"
     )
 
     # Print token usage if --verbose flag is passed
@@ -71,23 +74,26 @@ All paths you provide should be relative to the working directory.You do not nee
             print(f"Total tokens: {usage.total_tokens}")
 
     message = chat_completion.choices[0].message
-    function_call_obj = getattr(message, "function_call", None)
+    tool_calls = getattr(message, "tool_calls", None) or []
 
-    if function_call_obj:
+    if tool_calls:
         # Prepare function call object for helper
         class FunctionCallPart:
             def __init__(self, name, args):
                 self.name = name
                 self.args = args
 
+        tool_call = tool_calls[0]
+        function_obj = getattr(tool_call, "function", None)
+
         try:
-            args_dict = json.loads(getattr(function_call_obj, "arguments", "{}"))
+            args_dict = json.loads(getattr(function_obj, "arguments", "{}"))
         except json.JSONDecodeError:
-            print("Invalid JSON from model:", getattr(function_call_obj, "arguments", "{}"))
+            print("Invalid JSON from model:", getattr(function_obj, "arguments", "{}"))
             args_dict = {}
 
         function_call_part = FunctionCallPart(
-            name=getattr(function_call_obj, "name", None),
+            name=getattr(function_obj, "name", None),
             args=args_dict
         )
 
